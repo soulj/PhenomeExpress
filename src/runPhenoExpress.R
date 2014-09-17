@@ -4,9 +4,7 @@
 #optional - max size of subnetworks and FDR threshold of significant sub-networks
 
 
-#takes approximately 5 mins to run
-
-runPhenoExpress=function(inputGraph,expressionTable,Phenotypes,species,max_number=20,FDR=0.05,sampleSize=10000){
+runPhenomeExpress=function(inputGraph,expressionTable,Phenotypes,species,max_number=20,FDR=0.05,sampleSize=10000){
   
   require(data.table)
   require(Matrix)
@@ -40,7 +38,7 @@ runPhenoExpress=function(inputGraph,expressionTable,Phenotypes,species,max_numbe
   Clusters=do.call("rbind", Clusters)
   B=as.data.frame(Clusters)
   
-  #calulate the consensus sub-networks
+  #calculate the consensus sub-networks
   C=table(B[,2])
   B <- crossprod(table(B[1:2]))
   diag(B) <- 0
@@ -51,7 +49,7 @@ runPhenoExpress=function(inputGraph,expressionTable,Phenotypes,species,max_numbe
   
   Clusters=lapply(seq_along(Clusters),getNames,inputGraph,Clusters)
   
-  #sample random sub-networks to determine signifcance
+  #sample random sub-networks to determine significance
   pvalueres=c()
   for (i in 1:length(Clusters)){
     presentList=na.omit(match(V(Clusters[[i]])$name,V(inputGraph)$name))
@@ -76,7 +74,7 @@ runPhenoExpress=function(inputGraph,expressionTable,Phenotypes,species,max_numbe
   
 }
 
-#utility function to get match names of nodes
+#utility function to match names of nodes
 getNames=function(x,inputGraph,Clusters) {
   presentList=na.omit(match(V(Clusters[[x]])$name,V(inputGraph)$name))
   return(induced.subgraph(inputGraph,presentList))}
@@ -98,7 +96,6 @@ randomSample<-function(graph,ncount) {
     if (sum(node==selected,na.rm=TRUE)==0) {
       selected[[i]]<-node
       i<-i+1
-      #print(paste0("We now have ",i," nodes."))
     }
   }
   return(sum(V(induced.subgraph(graph, selected))$Pi))

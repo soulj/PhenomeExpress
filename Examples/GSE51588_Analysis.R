@@ -1,6 +1,6 @@
 #Analysis of GSE51588 OA bone dataset with PhenomeExpress
 
-#takes around 10mins to run entire script
+#takes around 15 mins to run entire script
 
 require("Matrix")
 require("igraph")
@@ -22,9 +22,10 @@ source("./src/RHWN.R")
 source("./src/runGIGA.R")
 source("./src/runPhenoExpress.R")
 
+setwd("~/PhenomeExpress/GSE51588/")
 
 #analyse the data
-targets <- read.delim("./GSE51588/targets.txt")
+targets <- read.delim("./targets.txt")
 images <- read.maimages(targets,source="agilent",green.only=TRUE)
 images.processed <- backgroundCorrect(images, method="normexp", offset=16)
 images.processed <- normalizeBetweenArrays(images.processed, method="quantile")
@@ -57,6 +58,7 @@ dt <- data.table(results)
 dt=dt[, .SD[which.max(abs(logFC)),], by=EntrezID]
 dt=as.data.frame(dt)
 
+setwd("~/PhenomeExpress/")
 
 #Use the David and Uniprot ID maps to match the EntrezID to Swissprot for the PPI network
 Young_EnteztoSwiss_via_Uniprot <- read.delim("./GSE51588/GenenamesEntreztoUniprot_via_UniProt.txt")
@@ -89,7 +91,7 @@ dt=dt[presentList,]
 Phenotypes=c("HP:0005086","MP:0003724","HP:0002829","HP:0100777","MP:0004983","ZP:0006539","MP:0002896","MP:0005006")
 
 #run Phenome Express - set inital subnetwork number to 15 rather than default 20 to give reasonably sized consensus sub-networks
-OAResults=runPhenoExpress(OA.network,dt,Phenotypes,"Human",max_number=15)
+OAResults=runPhenomeExpress(OA.network,dt,Phenotypes,"Human",max_number=15)
 
 #retrieve the significant sub-networks
 subnetworks=OAResults[[1]]

@@ -48,7 +48,7 @@ getHeterogeneousNetwork=function(inputGraph,species="Human") {
   x_filt=(!(rownames(x) %in% colnames(z)))
   x_filt2=rownames(x)[x_filt]
   
-  #create the heterogenous network based matrix
+  #create the gene to phenotype association based matrix
   cols=c(colnames(z_filt),x_filt2)
   rows=c(rownames(z_filt),y_filt2)
   m1 <- Matrix(data=0,nrow=(nrow(z_filt)+length(y_filt2)), ncol=(ncol(z_filt)+length(x_filt2)), sparse=TRUE,dimname=list(rows,cols))

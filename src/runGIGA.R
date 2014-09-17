@@ -1,24 +1,27 @@
-#initalise the clustering procedure
-
+#R implementation of the the GIGA perl script - much faster
+#finds sub-networks from a ranked list
 runGIGA=function(Scores,inputGraph,max_number=20) {
   
   Scores=Scores[order(Scores[,3]),]
+  #get the seeds
   seedCluster=initaliseCluster(Scores,inputGraph)
+  #expand the from the seeds
   expandedCluster=clusterExpand(Scores,seedCluster,completedCluster=c(),inputGraph,max_number)
   
+  #keep adding nodes until max size or pvalue doesn't improve
   while(length(expandedCluster[["cluster"]])>0) {
     seedCluster=addNewMin(Scores,expandedCluster,inputGraph)
     expandedCluster=clusterExpand(Scores,seedCluster,seedCluster[["completedCluster"]],inputGraph,max_number)
-    #print(length(expandedCluster[["cluster"]]))
+    
   }
-  
+  #return the final sub-networks
   finalCluster=getFinalClusters(Scores,expandedCluster,inputGraph)
   finalCluster=lapply(finalCluster,function(x) V(inputGraph)$name[x])
   return(finalCluster)
   
 }
 
-
+#function to find the local min in the PPI network
 initaliseCluster = function(Scores,inputGraph) {
   
   
@@ -51,7 +54,7 @@ initaliseCluster = function(Scores,inputGraph) {
   
 }
 
-
+#function to expand the existing sub-network
 clusterExpand = function(Scores,seedCluster,completedCluster,inputGraph,max_number) {
   NodeDataRankNamed=Scores[,3]
   names(NodeDataRankNamed)=Scores$geneRank

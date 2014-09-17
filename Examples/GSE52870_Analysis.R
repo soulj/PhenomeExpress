@@ -1,6 +1,6 @@
 #Analysis of GSE52870 PAX5 dataset with PhenomeExpress
 
-#takes around 5-10mins to run
+#takes around 15 mins to run
 require("Matrix")
 require("igraph")
 require("data.table")
@@ -73,7 +73,7 @@ dt$absFC=abs(dt$log2FoldChange)
 Phenotypes=c("HP:0004812","MP:0012431","HP:0012191","MP:0008211","MP:0008189")
 
 #run Phenome Express
-LeukResults=runPhenoExpress(pax5.network,dt,Phenotypes,"Mouse")
+LeukResults=runPhenomeExpress(pax5.network,dt,Phenotypes,"Mouse")
 
 #retrieve the significant sub-networks
 subnetworks=LeukResults[[1]]

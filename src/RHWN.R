@@ -123,7 +123,6 @@ RWHN_compute <- function(transitionMatrix,probabilityVector,alpha) {
     pi1 = ((1- alpha) * pi1 %*% transitionMatrix ) + ( alpha * probabilityVector)
     iter = iter + 1
   } 
-  print(iter)
   pi=as.matrix(t(pi1))
   geneRank=pi[order(-pi[,1]),]
   geneRank=as.data.frame(geneRank)
