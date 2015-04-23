@@ -13,16 +13,16 @@ getHeterogeneousNetwork=function(inputGraph,species="Human") {
   
   if (species == "Mouse") {
     
-    load("~/GenePhenoGraph_Mouse.RData")
-    load("~/UberPhenoGraph_Mouse.RData")
+    load("./src/Networks/GenePhenoGraph_Mouse.RData")
+    load("./src/Networks/UberPhenoGraph_Mouse.RData")
     
     
   }
   
   else {
     
-    load("~/GenePhenoGraph.RData")
-    load("~/UberPhenoGraph.RData")
+    load("./src/Networks/GenePhenoGraph.RData")
+    load("./src/Networks/UberPhenoGraph.RData")
     
   }
   
