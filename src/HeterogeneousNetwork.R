@@ -10,19 +10,19 @@ getHeterogeneousNetwork=function(inputGraph,species="Human") {
   require(igraph)
   
   
-  
+  print(getwd())
   if (species == "Mouse") {
     
-    load("./src/Networks/GenePhenoGraph_Mouse.RData")
-    load("./src/Networks/UberPhenoGraph_Mouse.RData")
+    load("./Networks/GenePhenoGraph_Mouse.RData")
+    load("./Networks/UberPhenoGraph_Mouse.RData")
     
     
   }
   
   else {
     
-    load("./src/Networks/GenePhenoGraph.RData")
-    load("./src/Networks/UberPhenoGraph.RData")
+    load("./Networks/GenePhenoGraph.RData")
+    load("./Networks/UberPhenoGraph.RData")
     
   }
   
