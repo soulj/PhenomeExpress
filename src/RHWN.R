@@ -18,7 +18,7 @@ RWHN = function(GenePhenoTransition,heterogeneousNetwork) {
   
   #do the same for the transpose
   #Gene to Phenotype
-  z2t=t(z2)
+  z2t=t(m2)
   present=z2t[Matrix::rowSums(z2t)>0,]
   present=(GenePhenoTransition*present)/Matrix::rowSums(present)
   z2t=rBind(present,z2t[Matrix::rowSums(z2t)==0,])
@@ -53,12 +53,12 @@ RWHN = function(GenePhenoTransition,heterogeneousNetwork) {
   #create the full transition matrix
   #|geneMatrix  (x)   Gene2Pheno (z2t) |
   #|Pheno2Gene (z2)   PhenoMatrix (y)  |
-    
+  
   cols=c(colnames(x),colnames(y))
   m1 <- Matrix(data=0,nrow=(nrow(x)+nrow(y)), ncol=(nrow(x)+nrow(y)), sparse=TRUE,dimname=list(cols,cols))
   
   temp1=cBind(x,z2t)
-  temp2=cBind(y,z2)
+  temp2=cBind(z2,y)
   m1=rBind(temp1,temp2)
   
   
@@ -117,7 +117,7 @@ RWHN_compute <- function(transitionMatrix,probabilityVector,alpha) {
   iter = 0
   pi0=probabilityVector
   pi1=c(rep(0,length(probabilityVector)))
-
+  
   while (sum(abs(pi0 - pi1)) > eps) {
     pi0 = pi1
     pi1 = ((1- alpha) * pi1 %*% transitionMatrix ) + ( alpha * probabilityVector)

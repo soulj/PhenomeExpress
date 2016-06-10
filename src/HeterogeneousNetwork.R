@@ -14,21 +14,27 @@ getHeterogeneousNetwork=function(inputGraph,species="Human") {
   if (species == "Mouse") {
     
     load("./Networks/GenePhenoGraph_Mouse.RData")
-    load("./Networks/UberPhenoGraph_Mouse.RData")
+    load("./Networks/UberPhenoGraph.RData")
     
     
   }
   
   else {
     
-    load("./Networks/GenePhenoGraph.RData")
+    load("./Networks/GenePhenoGraph_Human.RData")
     load("./Networks/UberPhenoGraph.RData")
     
   }
   
-  
+  #upgrade the networks if needed
+ if (packageVersion("igraph") != "0.7.1"){
+  UberPhenoGraph<-upgrade_graph(UberPhenoGraph)
+  GenePhenoGraph<-upgrade_graph(GenePhenoGraph)
+}
+
+
+
   #Make an adjency matrix from the graphs weighted by confidence or semantic similarity
-  
   x=get.adjacency(inputGraph,attr="Confidence")
   y=get.adjacency(UberPhenoGraph,attr="V3")
   z=get.adjacency(GenePhenoGraph)

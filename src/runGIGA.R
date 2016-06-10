@@ -1,17 +1,19 @@
 #R implementation of the the GIGA perl script - much faster
 #finds sub-networks from a ranked list
-runGIGA=function(Scores,inputGraph,max_number=20) {
+
+runGIGA=function(Scores,inputGraph,max_number=20,neighboursAdj,neighboursAdjSelf) {
   
+   
   Scores=Scores[order(Scores[,3]),]
   #get the seeds
-  seedCluster=initaliseCluster(Scores,inputGraph)
+  seedCluster=initaliseCluster(Scores,inputGraph,neighboursAdj,neighboursAdjSelf)
   #expand the from the seeds
-  expandedCluster=clusterExpand(Scores,seedCluster,completedCluster=c(),inputGraph,max_number)
+  expandedCluster=clusterExpand(Scores,seedCluster,completedCluster=c(),inputGraph,max_number,neighboursAdjSelf)
   
   #keep adding nodes until max size or pvalue doesn't improve
   while(length(expandedCluster[["cluster"]])>0) {
-    seedCluster=addNewMin(Scores,expandedCluster,inputGraph)
-    expandedCluster=clusterExpand(Scores,seedCluster,seedCluster[["completedCluster"]],inputGraph,max_number)
+    seedCluster=addNewMin(Scores,expandedCluster,inputGraph,neighboursAdjSelf)
+    expandedCluster=clusterExpand(Scores,seedCluster,seedCluster[["completedCluster"]],inputGraph,max_number,neighboursAdjSelf)
     
   }
   #return the final sub-networks
@@ -21,16 +23,24 @@ runGIGA=function(Scores,inputGraph,max_number=20) {
   
 }
 
+
+getNeighboursAdj<-function(i,adj){
+  neighbours<-which(adj[i,]>0)
+  return(neighbours)
+  
+}
+
+
 #function to find the local min in the PPI network
-initaliseCluster = function(Scores,inputGraph) {
+initaliseCluster = function(Scores,inputGraph,neighboursAdj,neighboursAdjSelf) {
   
   
   #identify the neihbours of each node and find the local minima - those with no connections to a node with a higher rank.
-  neighbours=neighborhood(inputGraph,nodes=V(inputGraph), 1)
-  size=vcount(inputGraph)
+  
+  size=length(neighboursAdjSelf)
   NodeDataRankNamed=Scores[,3]
   names(NodeDataRankNamed)=Scores$geneRank
-  neighbours=lapply(neighbours,function(x) NodeDataRankNamed[x])
+  neighbours=lapply(neighboursAdjSelf,function(x) NodeDataRankNamed[x])
   localMinIndex=lapply(neighbours, function(x) which.min(as.numeric(names(x))))
   localMin=which(localMinIndex==1)
   
@@ -40,22 +50,25 @@ initaliseCluster = function(Scores,inputGraph) {
   names(cluster)=V(inputGraph)$name[localMin]
   oldcluster=cluster
   cluster=lapply(cluster,function(x) NodeDataRankNamed[x])
-  oldpvalue=lapply(cluster,getPvalue,size)
+  #oldpvalue=lapply(cluster,getPvalue,size)
+  oldpvalue=rep(1,length(cluster))
+  names(oldpvalue)<-names(cluster)
   clustermax=localMin
   
-  neighbours=neighborhood(inputGraph,nodes=V(inputGraph)[localMin], 1)
+  neighbours=neighboursAdj[localMin]
   neighbours=sapply(neighbours,function(x) NodeDataRankNamed[x])
   neighbours=sapply(neighbours,function(x) x[sort.list(as.numeric(names(x)))])
-  names(neighbours)=names(cluster)
-  cluster=lapply(neighbours,'[',1:2)
-  clustermax=sapply(neighbours,function(x) names(x[2]))
+  neighbours=lapply(neighbours,'[',1)
+  cluster<-mapply(c, cluster, neighbours, SIMPLIFY=FALSE)
+  clustermax=sapply(cluster,function(x) names(x[2]))
   
   return(list(clustermax=clustermax,oldpvalue=oldpvalue,cluster=cluster,oldcluster=oldcluster))
   
 }
 
+
 #function to expand the existing sub-network
-clusterExpand = function(Scores,seedCluster,completedCluster,inputGraph,max_number) {
+clusterExpand = function(Scores,seedCluster,completedCluster,inputGraph,max_number,neighboursAdjSelf) {
   NodeDataRankNamed=Scores[,3]
   names(NodeDataRankNamed)=Scores$geneRank
   clustermax=seedCluster[["clustermax"]]
@@ -71,7 +84,7 @@ clusterExpand = function(Scores,seedCluster,completedCluster,inputGraph,max_numb
   #keep expanding while you can (neighbours less than current max rank)
   while (length(cluster_new)>0) {
     
-    neigbours=getNeigbours(cluster_new,inputGraph)
+    neigbours=getNeigbours(cluster_new,neighboursAdjSelf)
     lastexpansion=cluster_new
     
     #assign the expanded cluster with the rank
@@ -81,7 +94,7 @@ clusterExpand = function(Scores,seedCluster,completedCluster,inputGraph,max_numb
     expansion=lapply(seq_along(neigbours),function(x)  neigbours[[x]][(as.numeric(names( neigbours[[x]]))<=clustermax[x])])
     names(expansion)=names(cluster_new)
     #remove any clusters that are too big
-    expansion_tooBig=lapply(expansion,function(x) length(x)<=max_number)
+    expansion_tooBig=lapply(expansion,function(x) length(x)<max_number)
     cluster_new=expansion[unlist(expansion_tooBig)]
     completedCluster=c(completedCluster,oldcluster[!unlist(expansion_tooBig)])
     oldcluster=oldcluster[unlist( expansion_tooBig)]
@@ -103,7 +116,8 @@ clusterExpand = function(Scores,seedCluster,completedCluster,inputGraph,max_numb
     oldcluster=oldcluster[match(names(tobePValued),names(oldcluster))]
     oldpvalue=oldpvalue[names(oldpvalue) %in% names(tobePValued)]
     currentPValue=lapply(tobePValued,getPvalue,size)
-    expansion_improved=lapply(seq_along(currentPValue),function(x) currentPValue[[x]]<oldpvalue[[x]])
+    expansion_improved=lapply(names(currentPValue),function(x) currentPValue[[x]]<oldpvalue[[x]])
+    names(expansion_improved)<-names(currentPValue)
     cluster=tobePValued[unlist(expansion_improved)]
     worseClusters=oldcluster[!unlist(expansion_improved)]
     completedCluster=c(completedCluster,worseClusters)
@@ -116,7 +130,7 @@ clusterExpand = function(Scores,seedCluster,completedCluster,inputGraph,max_numb
 }
 
 
-addNewMin= function(Scores,expandedCluster,inputGraph) {
+addNewMin= function(Scores,expandedCluster,inputGraph,neighboursAdjSelf) {
   
   NodeDataRankNamed=Scores[,3]
   names(NodeDataRankNamed)=Scores$geneRank
@@ -125,8 +139,8 @@ addNewMin= function(Scores,expandedCluster,inputGraph) {
   completedCluster=expandedCluster[["completedCluster"]]
   
   oldcluster=cluster
-  newNeighbours=getNeigbours(cluster,inputGraph)
-
+  newNeighbours=getNeigbours(cluster,neighboursAdjSelf)
+  
   
   clustermax=c()
   newMin=lapply(newNeighbours,function(x) NodeDataRankNamed[x])
@@ -151,22 +165,10 @@ getPvalue=function(x,size) {
   return(pvalue)
 }
 
-getNeigbours = function(cluster,inputGraph) {
-  neighbours=neighborhood(inputGraph,nodes=V(inputGraph)[unlist(cluster)], 1)
+getNeigbours = function(cluster,neighboursAdj) {
   
-  #merge the node negbourhood to cluster neighbour hoods.
-  count=0
-  newNeighbours=c()
-  for (i in 1:length(cluster)) {
-    tempNeighbours=c()
-    for ( j in 1: length(cluster[[i]])) {
-      count=count+1
-      temp=unlist(neighbours[count])
-      tempNeighbours=c(tempNeighbours,temp)
-    }
-    tempNeighbours=tempNeighbours[!duplicated(tempNeighbours)]
-    newNeighbours[i]=list(tempNeighbours)
-  }
+  newNeighbours=lapply(cluster,function(x) unlist(neighboursAdj[ unlist(x)]))
+  newNeighbours=lapply(newNeighbours,function(x) x[!duplicated(x)])
   
   return(newNeighbours)
 }
@@ -204,4 +206,3 @@ getFinalClusters=function(Scores,expandedCluster,inputGraph){
   return(finalCluster)
   
 }
-
